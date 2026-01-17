@@ -1,0 +1,14 @@
+import "tfplan/v2" as tfplan
+
+# Get all AWS S3 Buckets from the plan
+s3_buckets = filter tfplan.resource_changes as _, rc {
+    rc.type is "aws_s3_bucket" and
+    (rc.change.actions contains "create" or rc.change.actions contains "update")
+}
+
+# The Rule: Every bucket MUST have a 'CostCenter' tag
+main = rule {
+    all s3_buckets as _, bucket {
+        keys(bucket.change.after.tags else {}) contains "CostCenter"
+    }
+}
